@@ -56,7 +56,6 @@ class Styles:
             }}
             
             QWidget {{
-                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
                 font-size: 13px;
                 color: {c['text_primary']};
             }}

@@ -57,7 +57,10 @@ class DownloadItemWidget(QWidget):
         
         # Filename
         self.filename_label = QLabel(self.task.filename)
-        self.filename_label.setFont(QFont("SF Pro Text", 14, QFont.Weight.DemiBold))
+        font = self.filename_label.font()
+        font.setPointSize(14)
+        font.setWeight(QFont.Weight.DemiBold)
+        self.filename_label.setFont(font)
         self.filename_label.setStyleSheet(f"color: {Styles.COLORS['text_primary']};")
         info_layout.addWidget(self.filename_label)
         
@@ -106,7 +109,7 @@ class DownloadItemWidget(QWidget):
         self.pause_resume_btn = QPushButton()
         self.pause_resume_btn.setObjectName("iconButton")
         self.pause_resume_btn.setFixedSize(36, 36)
-        self.pause_resume_btn.setText("⏸")
+        self.pause_resume_btn.setText("Pause")
         self.pause_resume_btn.setToolTip("Pause")
         self.pause_resume_btn.clicked.connect(self._on_pause_resume)
         buttons_layout.addWidget(self.pause_resume_btn)
@@ -115,7 +118,7 @@ class DownloadItemWidget(QWidget):
         self.cancel_btn = QPushButton()
         self.cancel_btn.setObjectName("iconButton")
         self.cancel_btn.setFixedSize(36, 36)
-        self.cancel_btn.setText("✕")
+        self.cancel_btn.setText("Cancel")
         self.cancel_btn.setToolTip("Cancel")
         self.cancel_btn.clicked.connect(self._on_cancel)
         buttons_layout.addWidget(self.cancel_btn)
@@ -124,7 +127,7 @@ class DownloadItemWidget(QWidget):
         self.open_folder_btn = QPushButton()
         self.open_folder_btn.setObjectName("iconButton")
         self.open_folder_btn.setFixedSize(36, 36)
-        self.open_folder_btn.setText("📂")
+        self.open_folder_btn.setText("Open Folder")
         self.open_folder_btn.setToolTip("Open Folder")
         self.open_folder_btn.clicked.connect(lambda: self.open_folder_clicked.emit(self.task.id))
         self.open_folder_btn.hide()
@@ -141,21 +144,21 @@ class DownloadItemWidget(QWidget):
         filename = self.task.filename.lower()
         
         if any(filename.endswith(ext) for ext in ['.mp4', '.mkv', '.avi', '.mov', '.wmv']):
-            return "🎬"
+            return "[VIDEO]"
         elif any(filename.endswith(ext) for ext in ['.mp3', '.wav', '.flac', '.aac', '.m4a']):
-            return "🎵"
+            return "[AUDIO]"
         elif any(filename.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']):
-            return "🖼"
+            return "[IMAGE]"
         elif any(filename.endswith(ext) for ext in ['.pdf']):
-            return "📄"
+            return "[PDF]"
         elif any(filename.endswith(ext) for ext in ['.zip', '.rar', '.7z', '.tar', '.gz']):
-            return "📦"
+            return "[ARCHIVE]"
         elif any(filename.endswith(ext) for ext in ['.exe', '.dmg', '.app', '.pkg']):
-            return "💿"
+            return "[APP]"
         elif any(filename.endswith(ext) for ext in ['.doc', '.docx', '.txt', '.rtf']):
-            return "📝"
+            return "[DOC]"
         else:
-            return "📁"
+            return "[FILE]"
     
     def update_display(self):
         """Update the display based on current task state"""
@@ -212,13 +215,13 @@ class DownloadItemWidget(QWidget):
         state = self.task.state
         
         if state in (DownloadState.DOWNLOADING, DownloadState.FETCHING_INFO):
-            self.pause_resume_btn.setText("⏸")
+            self.pause_resume_btn.setText("Pause")
             self.pause_resume_btn.setToolTip("Pause")
             self.pause_resume_btn.show()
             self.cancel_btn.show()
             self.open_folder_btn.hide()
         elif state == DownloadState.PAUSED:
-            self.pause_resume_btn.setText("▶")
+            self.pause_resume_btn.setText("Resume")
             self.pause_resume_btn.setToolTip("Resume")
             self.pause_resume_btn.show()
             self.cancel_btn.show()
@@ -229,13 +232,13 @@ class DownloadItemWidget(QWidget):
             self.open_folder_btn.hide()
         elif state == DownloadState.COMPLETED:
             self.pause_resume_btn.hide()
-            self.cancel_btn.setText("🗑")
+            self.cancel_btn.setText("Remove")
             self.cancel_btn.setToolTip("Remove")
             self.cancel_btn.show()
             self.open_folder_btn.show()
         else:  # FAILED, CANCELLED
             self.pause_resume_btn.hide()
-            self.cancel_btn.setText("🗑")
+            self.cancel_btn.setText("Remove")
             self.cancel_btn.setToolTip("Remove")
             self.cancel_btn.show()
             self.open_folder_btn.hide()
