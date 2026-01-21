@@ -70,6 +70,14 @@ class DownloadManager:
             saved_downloads = self.database.get_all_downloads()
             for dl in saved_downloads:
                 if dl.state in (DownloadState.QUEUED, DownloadState.DOWNLOADING, DownloadState.PAUSED):
+                    # Restore chunk states if available
+                    try:
+                        chunk_states = self.database.get_chunk_states(dl.id)
+                        if chunk_states:
+                            dl.saved_chunk_states = chunk_states
+                    except Exception as e:
+                        print(f"Error loading chunks for {dl.id}: {e}")
+                        
                     self.downloads[dl.id] = dl
                     if dl.state == DownloadState.QUEUED:
                         self.queue.append(dl.id)
@@ -81,6 +89,12 @@ class DownloadManager:
         """Stop the download manager"""
         self._is_running = False
         
+        # Save state of all active downloads
+        if self.database:
+            for task in self.downloads.values():
+                if task.state in (DownloadState.DOWNLOADING, DownloadState.PAUSED):
+                    self._save_task_state(task)
+        
         if self._queue_task:
             self._queue_task.cancel()
             try:
@@ -90,6 +104,20 @@ class DownloadManager:
         
         await self.engine.cleanup()
     
+    def _save_task_state(self, task: DownloadTask):
+        """Save task state including chunks"""
+        if self.database:
+            try:
+                self.database.update_download(task)
+                
+                # Save chunks if manager exists
+                if task._chunk_manager:
+                    state = task._chunk_manager.get_state()
+                    # Pass dicts directly; database now supports both formats
+                    self.database.save_chunk_state(task.id, state['chunks'])
+            except Exception as e:
+                print(f"Failed to save chunk state for {task.id}: {e}")
+
     async def add_download(
         self,
         url: str,
@@ -205,6 +233,11 @@ class DownloadManager:
         """Pause a download"""
         self.engine.pause_download(task_id)
         self._active_count = max(0, self._active_count - 1)
+        
+        # Save state
+        task = self.downloads.get(task_id)
+        if task:
+            self._save_task_state(task)
     
     async def resume_download(self, task_id: str):
         """Resume a paused download"""

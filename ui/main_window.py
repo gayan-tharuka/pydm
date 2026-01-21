@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QListWidget, QListWidgetItem, QFrame,
     QStatusBar, QToolBar, QMessageBox, QApplication,
-    QSizePolicy, QScrollArea, QSpacerItem
+    QSizePolicy, QScrollArea, QSpacerItem, QSystemTrayIcon
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSlot, QSize
 from PyQt6.QtGui import QFont, QAction, QCloseEvent, QIcon
@@ -26,6 +26,7 @@ from .styles import Styles
 from .add_download_dialog import AddDownloadDialog
 from .download_item_widget import DownloadItemWidget
 from .system_tray import SystemTrayIcon
+from .icon_utils import IconUtils
 
 
 class MainWindow(QMainWindow):
@@ -70,7 +71,7 @@ class MainWindow(QMainWindow):
     
     def _setup_window(self):
         """Setup window properties"""
-        self.setWindowTitle("PyDM - Download Manager")
+        self.setWindowTitle("PyDM")
         self.setMinimumSize(800, 600)
         self.resize(900, 650)
         
@@ -86,18 +87,11 @@ class MainWindow(QMainWindow):
         """Setup the toolbar"""
         toolbar = QToolBar()
         toolbar.setMovable(False)
-        toolbar.setIconSize(QSize(24, 24))
-        toolbar.setStyleSheet(f"""
-            QToolBar {{
-                background-color: {Styles.COLORS['bg_medium']};
-                border: none;
-                padding: 8px;
-                spacing: 8px;
-            }}
-        """)
+        toolbar.setIconSize(QSize(20, 20))
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
-        # Add Download button
-        add_action = QAction("Add Download", self)
+        # Add Download Action
+        add_action = QAction(IconUtils.icon("add", Styles.COLORS['primary']), "Add Download", self)
         add_action.setToolTip("Add a new download (Cmd+N)")
         add_action.setShortcut("Ctrl+N")
         add_action.triggered.connect(self._show_add_dialog)
@@ -105,22 +99,22 @@ class MainWindow(QMainWindow):
         
         toolbar.addSeparator()
         
-        # Pause All button
-        pause_all_action = QAction("Pause All", self)
+        # Pause All Action
+        pause_all_action = QAction(IconUtils.icon("pause", Styles.COLORS['text_secondary']), "Pause All", self)
         pause_all_action.setToolTip("Pause all active downloads")
         pause_all_action.triggered.connect(self._pause_all)
         toolbar.addAction(pause_all_action)
         
-        # Resume All button
-        resume_all_action = QAction("Resume All", self)
+        # Resume All Action
+        resume_all_action = QAction(IconUtils.icon("resume", Styles.COLORS['text_secondary']), "Resume All", self)
         resume_all_action.setToolTip("Resume all paused downloads")
         resume_all_action.triggered.connect(self._resume_all)
         toolbar.addAction(resume_all_action)
         
         toolbar.addSeparator()
         
-        # Clear Completed button
-        clear_action = QAction("Clear Completed", self)
+        # Clear Completed Action
+        clear_action = QAction(IconUtils.icon("clear", Styles.COLORS['text_secondary']), "Clear Completed", self)
         clear_action.setToolTip("Remove completed downloads from list")
         clear_action.triggered.connect(self._clear_completed)
         toolbar.addAction(clear_action)
@@ -130,8 +124,8 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         toolbar.addWidget(spacer)
         
-        # Settings button
-        settings_action = QAction("Settings", self)
+        # Settings Action
+        settings_action = QAction(IconUtils.icon("settings", Styles.COLORS['text_secondary']), "Settings", self)
         settings_action.setToolTip("Open settings")
         settings_action.triggered.connect(self._show_settings)
         toolbar.addAction(settings_action)
@@ -142,41 +136,36 @@ class MainWindow(QMainWindow):
         """Setup the central widget"""
         central = QWidget()
         layout = QVBoxLayout(central)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
         
         # Header
         header_layout = QHBoxLayout()
         
         title = QLabel("Downloads")
-        font = title.font()
-        font.setPointSize(28)
-        font.setWeight(QFont.Weight.Bold)
-        title.setFont(font)
-        title.setStyleSheet(f"color: {Styles.COLORS['text_primary']};")
+        title.setObjectName("titleLabel")
         header_layout.addWidget(title)
         
         header_layout.addStretch()
         
         # Stats labels
         self.active_label = QLabel("0 active")
+        self.active_label.setObjectName("subtitleLabel")
         self.active_label.setStyleSheet(f"""
-            color: {Styles.COLORS['text_secondary']};
-            font-size: 14px;
-            padding: 6px 12px;
-            background-color: {Styles.COLORS['bg_card']};
-            border-radius: 6px;
+            padding: 4px 8px;
+            background-color: {Styles.COLORS['bg_medium']};
+            border-radius: 4px;
         """)
         header_layout.addWidget(self.active_label)
         
         self.speed_label = QLabel("0 B/s")
+        self.speed_label.setObjectName("subtitleLabel")
         self.speed_label.setStyleSheet(f"""
             color: {Styles.COLORS['primary']};
-            font-size: 14px;
             font-weight: 600;
-            padding: 6px 12px;
-            background-color: {Styles.COLORS['bg_card']};
-            border-radius: 6px;
+            padding: 4px 8px;
+            background-color: {Styles.COLORS['bg_medium']};
+            border-radius: 4px;
         """)
         header_layout.addWidget(self.speed_label)
         
@@ -184,55 +173,39 @@ class MainWindow(QMainWindow):
         
         # Download list
         self.download_list = QListWidget()
-        self.download_list.setSpacing(8)
+        self.download_list.setSpacing(10)
         self.download_list.setVerticalScrollMode(QListWidget.ScrollMode.ScrollPerPixel)
         self.download_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.download_list.setStyleSheet(f"""
-            QListWidget {{
-                background-color: {Styles.COLORS['bg_dark']};
-                border: none;
-                border-radius: 12px;
-            }}
-            QListWidget::item {{
-                background-color: transparent;
-                padding: 0;
-                margin: 4px 0;
-            }}
-            QListWidget::item:selected {{
-                background-color: transparent;
-            }}
-        """)
+        
         layout.addWidget(self.download_list)
         
         # Empty state (shown when no downloads)
         self.empty_widget = QWidget()
         empty_layout = QVBoxLayout(self.empty_widget)
         empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        empty_layout.setSpacing(10)
         
-        empty_icon = QLabel("No Downloads")
-        font = empty_icon.font()
-        font.setPointSize(24)
-        empty_icon.setFont(font)
+        # Large empty icon
+        empty_icon = QLabel()
+        empty_icon.setFixedSize(80, 80)
+        empty_icon.setPixmap(IconUtils.icon("archive", Styles.COLORS['border'], 80).pixmap(80, 80))
         empty_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_icon)
         
-        empty_text = QLabel("No downloads yet")
-        font = empty_text.font()
-        font.setPointSize(18)
-        font.setWeight(QFont.Weight.DemiBold)
-        empty_text.setFont(font)
-        empty_text.setStyleSheet(f"color: {Styles.COLORS['text_secondary']};")
+        empty_text = QLabel("No Downloads Yet")
+        empty_text.setObjectName("subtitleLabel")
+        empty_text.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {Styles.COLORS['text_muted']};")
         empty_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_text)
         
-        empty_hint = QLabel("Click 'Add Download' to get started")
-        empty_hint.setStyleSheet(f"color: {Styles.COLORS['text_muted']};")
+        empty_hint = QLabel("Click '+' to add a new download")
+        empty_hint.setObjectName("mutedLabel")
         empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_hint)
         
-        add_btn = QPushButton("Add Download")
-        add_btn.setMinimumHeight(44)
-        add_btn.setMaximumWidth(200)
+        add_btn = QPushButton("Start Download", cursor=Qt.CursorShape.PointingHandCursor)
+        add_btn.setObjectName("primaryButton")
+        add_btn.setFixedSize(140, 36)
         add_btn.clicked.connect(self._show_add_dialog)
         empty_layout.addWidget(add_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         
@@ -246,18 +219,10 @@ class MainWindow(QMainWindow):
     def _setup_status_bar(self):
         """Setup the status bar"""
         status_bar = QStatusBar()
-        status_bar.setStyleSheet(f"""
-            QStatusBar {{
-                background-color: {Styles.COLORS['bg_medium']};
-                color: {Styles.COLORS['text_secondary']};
-                border-top: 1px solid {Styles.COLORS['border']};
-                padding: 4px 16px;
-            }}
-        """)
-        
+        status_bar.setSizeGripEnabled(False)
         self.status_message = QLabel("Ready")
+        self.status_message.setObjectName("mutedLabel")
         status_bar.addWidget(self.status_message)
-        
         self.setStatusBar(status_bar)
     
     def _setup_system_tray(self):
@@ -389,7 +354,6 @@ class MainWindow(QMainWindow):
     
     def _show_settings(self):
         """Show settings dialog"""
-        # TODO: Implement settings dialog
         QMessageBox.information(self, "Settings", "Settings dialog coming soon!")
     
     # ============ Download Action Handlers ============
@@ -489,6 +453,7 @@ class MainWindow(QMainWindow):
     
     async def _cleanup_and_quit(self):
         """Cleanup and quit"""
+        self.tray.cleanup()
         await self.download_manager.stop()
         QApplication.quit()
     
@@ -497,11 +462,10 @@ class MainWindow(QMainWindow):
         if self.config.minimize_to_tray:
             event.ignore()
             self.hide()
-            self.tray.show_notification(
-                "PyDM Minimized",
-                "PyDM is still running in the background.",
-                QSystemTrayIcon.MessageIcon.Information
-            )
+            # Avoid showing notification on minimize as it can cause crashes on macOS
+            # self.tray.show_notification("PyDM Minimized", "PyDM is still running in the background.")
         else:
+            # Cleanup synchronously before accepting the event
+            self.tray.cleanup()
             event.accept()
             asyncio.create_task(self._cleanup_and_quit())

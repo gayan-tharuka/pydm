@@ -6,41 +6,42 @@ and smooth animations for a premium feel.
 """
 
 
+
 class Styles:
-    """Modern dark theme styles for PyDM"""
+    """Modern dark theme styles for PyDM (Apple Design)"""
     
-    # Color Palette
+    # Color Palette (macOS System Colors - Dark Mode)
     COLORS = {
         # Primary colors
-        "primary": "#4A90D9",           # Main accent blue
-        "primary_hover": "#5BA0E9",     # Hover state
-        "primary_pressed": "#3A80C9",   # Pressed state
+        "primary": "#0A84FF",           # System Blue
+        "primary_hover": "#409CFF",     # System Blue Light
+        "primary_pressed": "#0071F0",   # System Blue Dark
         
         # Background colors
-        "bg_dark": "#1A1A2E",           # Darkest background
-        "bg_medium": "#16213E",         # Medium background
-        "bg_light": "#1F2B4A",          # Lighter background
-        "bg_card": "#232D4D",           # Card background
-        "bg_hover": "#2A3656",          # Hover background
+        "bg_dark": "#1C1C1E",           # System Background
+        "bg_medium": "#2C2C2E",         # Secondary System Background
+        "bg_light": "#3A3A3C",          # Tertiary System Background
+        "bg_card": "#2C2C2E",           # Card background
+        "bg_hover": "#3A3A3C",          # Hover state
         
         # Text colors
-        "text_primary": "#FFFFFF",      # Primary text
-        "text_secondary": "#A0A8C0",    # Secondary text
-        "text_muted": "#6B7280",        # Muted text
+        "text_primary": "#FFFFFF",      # Label Color
+        "text_secondary": "#8E8E93",    # Secondary Label Color (System Gray)
+        "text_muted": "#636366",        # Tertiary Label Color
         
         # Status colors
-        "success": "#10B981",           # Success green
-        "warning": "#F59E0B",           # Warning amber
-        "error": "#EF4444",             # Error red
-        "info": "#3B82F6",              # Info blue
+        "success": "#30D158",           # System Green
+        "warning": "#FF9F0A",           # System Orange
+        "error": "#FF453A",             # System Red
+        "info": "#0A84FF",              # System Blue
         
         # Border colors
-        "border": "#2D3A5C",            # Default border
-        "border_focus": "#4A90D9",      # Focus border
+        "border": "#38383A",            # Separator Color
+        "border_focus": "#0A84FF",      # Focus Ring
         
         # Progress bar
-        "progress_bg": "#2D3A5C",       # Progress background
-        "progress_fill": "#4A90D9",     # Progress fill
+        "progress_bg": "#3A3A3C",       # Track
+        "progress_fill": "#0A84FF",     # Fill
     }
     
     @classmethod
@@ -56,27 +57,28 @@ class Styles:
             }}
             
             QWidget {{
-                font-size: 13px;
                 color: {c['text_primary']};
+                selection-background-color: {c['primary']};
+                selection-color: #FFFFFF;
+                outline: none;
             }}
             
-            /* Scroll Bars */
+            /* Scroll Bars (macOS style invisible track) */
             QScrollBar:vertical {{
-                background: {c['bg_medium']};
+                background: transparent;
                 width: 12px;
-                border-radius: 6px;
                 margin: 0;
             }}
             
             QScrollBar::handle:vertical {{
-                background: {c['bg_hover']};
-                min-height: 30px;
+                background: {c['bg_light']};
+                min-height: 40px;
                 border-radius: 6px;
                 margin: 2px;
             }}
             
             QScrollBar::handle:vertical:hover {{
-                background: {c['primary']};
+                background: {c['text_muted']};
             }}
             
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
@@ -84,95 +86,82 @@ class Styles:
             }}
             
             QScrollBar:horizontal {{
-                background: {c['bg_medium']};
+                background: transparent;
                 height: 12px;
-                border-radius: 6px;
             }}
             
             QScrollBar::handle:horizontal {{
-                background: {c['bg_hover']};
-                min-width: 30px;
+                background: {c['bg_light']};
+                min-width: 40px;
                 border-radius: 6px;
                 margin: 2px;
             }}
             
-            QScrollBar::handle:horizontal:hover {{
-                background: {c['primary']};
-            }}
-            
-            /* Buttons */
+            /* Buttons (Apple Style) */
             QPushButton {{
-                background-color: {c['primary']};
+                background-color: {c['bg_light']};
                 color: {c['text_primary']};
                 border: none;
-                border-radius: 8px;
-                padding: 10px 20px;
-                font-weight: 600;
+                border-radius: 6px;
+                padding: 6px 12px;
                 font-size: 13px;
+                font-weight: 500;
             }}
             
             QPushButton:hover {{
-                background-color: {c['primary_hover']};
+                background-color: {c['bg_hover']};
             }}
             
             QPushButton:pressed {{
-                background-color: {c['primary_pressed']};
+                background-color: {c['border']};
             }}
             
             QPushButton:disabled {{
-                background-color: {c['bg_hover']};
+                background-color: {c['bg_dark']};
                 color: {c['text_muted']};
-            }}
-            
-            QPushButton#secondaryButton {{
-                background-color: {c['bg_light']};
                 border: 1px solid {c['border']};
             }}
             
-            QPushButton#secondaryButton:hover {{
-                background-color: {c['bg_hover']};
-                border-color: {c['primary']};
+            /* Primary Button (Blue) */
+            QPushButton#primaryButton {{
+                background-color: {c['primary']};
+                color: #FFFFFF;
             }}
             
-            QPushButton#dangerButton {{
-                background-color: {c['error']};
+            QPushButton#primaryButton:hover {{
+                background-color: {c['primary_hover']};
             }}
             
-            QPushButton#dangerButton:hover {{
-                background-color: #DC2626;
+            QPushButton#primaryButton:pressed {{
+                background-color: {c['primary_pressed']};
             }}
             
-            /* Icon Buttons (Toolbar) */
+            /* Icon Buttons (Toolbar/List) */
             QPushButton#iconButton {{
                 background-color: transparent;
-                border-radius: 8px;
-                padding: 8px;
-                min-width: 40px;
-                min-height: 40px;
+                border-radius: 6px;
+                padding: 4px;
+                min-width: 28px;
+                min-height: 28px;
             }}
             
             QPushButton#iconButton:hover {{
-                background-color: {c['bg_hover']};
+                background-color: {c['bg_light']};
             }}
             
-            /* Line Edits */
+            /* Line Edits (Modern Input) */
             QLineEdit {{
-                background-color: {c['bg_light']};
-                border: 2px solid {c['border']};
-                border-radius: 8px;
-                padding: 12px 16px;
+                background-color: {c['bg_medium']};
+                border: 1px solid {c['border']};
+                border-radius: 6px;
+                padding: 8px 10px;
                 color: {c['text_primary']};
-                font-size: 14px;
-                selection-background-color: {c['primary']};
+                font-size: 13px;
             }}
             
             QLineEdit:focus {{
-                border-color: {c['primary']};
-            }}
-            
-            QLineEdit:disabled {{
-                background-color: {c['bg_medium']};
-                color: {c['text_muted']};
+                border: 1px solid {c['primary']};
+                background-color: {c['bg_dark']};
             }}
             
             QLineEdit::placeholder {{
@@ -185,225 +174,125 @@ class Styles:
             }}
             
             QLabel#titleLabel {{
-                font-size: 24px;
+                font-size: 22px;
                 font-weight: 700;
                 color: {c['text_primary']};
             }}
             
             QLabel#subtitleLabel {{
-                font-size: 14px;
+                font-size: 13px;
                 color: {c['text_secondary']};
             }}
             
             QLabel#mutedLabel {{
                 color: {c['text_muted']};
-                font-size: 12px;
+                font-size: 11px;
             }}
             
-            /* Progress Bar */
+            /* Progress Bar (Slim) */
             QProgressBar {{
                 background-color: {c['progress_bg']};
                 border: none;
-                border-radius: 6px;
-                height: 12px;
+                border-radius: 2px;
+                height: 4px;
                 text-align: center;
-                font-size: 10px;
-                color: {c['text_primary']};
             }}
             
             QProgressBar::chunk {{
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {c['primary']},
-                    stop:1 {c['primary_hover']}
-                );
-                border-radius: 6px;
+                background-color: {c['primary']};
+                border-radius: 2px;
             }}
             
             /* List Widget */
             QListWidget {{
-                background-color: {c['bg_medium']};
+                background-color: transparent;
                 border: none;
-                border-radius: 12px;
-                padding: 8px;
                 outline: none;
             }}
             
             QListWidget::item {{
-                background-color: {c['bg_card']};
-                border-radius: 10px;
-                margin: 4px 0;
+                background-color: transparent;
+                border-radius: 8px;
+                margin: 4px 8px;
                 padding: 0;
-            }}
-            
-            QListWidget::item:selected {{
-                background-color: {c['bg_hover']};
-                border: 1px solid {c['primary']};
-            }}
-            
-            QListWidget::item:hover {{
-                background-color: {c['bg_hover']};
             }}
             
             /* Group Box */
             QGroupBox {{
-                background-color: {c['bg_card']};
+                background-color: transparent;
                 border: 1px solid {c['border']};
-                border-radius: 12px;
-                margin-top: 16px;
-                padding: 20px;
+                border-radius: 8px;
+                margin-top: 20px;
+                padding: 16px;
                 font-weight: 600;
             }}
             
             QGroupBox::title {{
                 subcontrol-origin: margin;
                 subcontrol-position: top left;
-                left: 16px;
-                padding: 0 8px;
+                left: 10px;
+                padding: 0 4px;
                 color: {c['text_secondary']};
             }}
             
-            /* Combo Box */
-            QComboBox {{
-                background-color: {c['bg_light']};
-                border: 2px solid {c['border']};
-                border-radius: 8px;
-                padding: 10px 16px;
-                color: {c['text_primary']};
-                min-width: 120px;
-            }}
-            
-            QComboBox:hover {{
-                border-color: {c['primary']};
-            }}
-            
-            QComboBox::drop-down {{
-                border: none;
-                width: 30px;
-            }}
-            
-            QComboBox::down-arrow {{
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 6px solid {c['text_secondary']};
-                margin-right: 10px;
-            }}
-            
-            QComboBox QAbstractItemView {{
-                background-color: {c['bg_card']};
-                border: 1px solid {c['border']};
-                border-radius: 8px;
-                selection-background-color: {c['primary']};
-                outline: none;
-            }}
-            
-            /* Spin Box */
-            QSpinBox {{
-                background-color: {c['bg_light']};
-                border: 2px solid {c['border']};
-                border-radius: 8px;
-                padding: 10px 16px;
-                color: {c['text_primary']};
-            }}
-            
-            QSpinBox:focus {{
-                border-color: {c['primary']};
-            }}
-            
-            /* Check Box */
-            QCheckBox {{
-                spacing: 10px;
-                color: {c['text_primary']};
-            }}
-            
-            QCheckBox::indicator {{
-                width: 20px;
-                height: 20px;
-                border-radius: 4px;
-                border: 2px solid {c['border']};
-                background-color: {c['bg_light']};
-            }}
-            
-            QCheckBox::indicator:checked {{
-                background-color: {c['primary']};
-                border-color: {c['primary']};
-            }}
-            
-            QCheckBox::indicator:hover {{
-                border-color: {c['primary']};
-            }}
-            
-            /* Tab Widget */
-            QTabWidget::pane {{
-                background-color: {c['bg_card']};
-                border: 1px solid {c['border']};
-                border-radius: 12px;
-                padding: 16px;
-            }}
-            
-            QTabBar::tab {{
+            /* Combo/Spin Box */
+            QComboBox, QSpinBox {{
                 background-color: {c['bg_medium']};
-                color: {c['text_secondary']};
-                border: none;
-                padding: 12px 24px;
-                margin-right: 4px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-            }}
-            
-            QTabBar::tab:selected {{
-                background-color: {c['bg_card']};
+                border: 1px solid {c['border']};
+                border-radius: 6px;
+                padding: 6px 10px;
                 color: {c['text_primary']};
             }}
             
-            QTabBar::tab:hover {{
-                background-color: {c['bg_hover']};
+            QComboBox:hover, QSpinBox:hover {{
+                border-color: {c['text_secondary']};
             }}
-            
+
             /* Menu */
             QMenu {{
-                background-color: {c['bg_card']};
+                background-color: {c['bg_medium']};
                 border: 1px solid {c['border']};
-                border-radius: 8px;
-                padding: 8px;
+                border-radius: 6px;
+                padding: 4px;
             }}
             
             QMenu::item {{
-                padding: 10px 24px;
-                border-radius: 6px;
+                padding: 6px 20px;
+                border-radius: 4px;
             }}
             
             QMenu::item:selected {{
                 background-color: {c['primary']};
-            }}
-            
-            QMenu::separator {{
-                height: 1px;
-                background-color: {c['border']};
-                margin: 8px 16px;
+                color: #FFFFFF;
             }}
             
             /* Tool Tip */
             QToolTip {{
-                background-color: {c['bg_card']};
+                background-color: {c['bg_medium']};
                 color: {c['text_primary']};
                 border: 1px solid {c['border']};
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 12px;
+            }}
+            
+            /* ToolBar */
+            QToolBar {{
+                background: {c['bg_dark']};
+                border-bottom: 1px solid {c['border']};
+                spacing: 12px;
+                padding: 8px;
+            }}
+            
+            QToolButton {{
+                background-color: transparent;
                 border-radius: 6px;
-                padding: 8px 12px;
+                padding: 6px;
+                color: {c['text_primary']};
             }}
             
-            /* Splitter */
-            QSplitter::handle {{
-                background-color: {c['border']};
-            }}
-            
-            QSplitter::handle:horizontal {{
-                width: 2px;
-            }}
-            
-            QSplitter::handle:vertical {{
-                height: 2px;
+            QToolButton:hover {{
+                background-color: {c['bg_medium']};
             }}
         """
     
@@ -412,22 +301,20 @@ class Styles:
         """Get style for download item widget based on state"""
         c = cls.COLORS
         
+        # Consistent Card Look
         base_style = f"""
             background-color: {c['bg_card']};
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 10px;
+            padding: 12px;
         """
         
+        # Subtle border hint instead of heavy side border
         if state == "downloading":
-            return base_style + f"border-left: 4px solid {c['primary']};"
+            return base_style + f"border: 1px solid {c['border_focus']};"
         elif state == "completed":
-            return base_style + f"border-left: 4px solid {c['success']};"
-        elif state == "paused":
-            return base_style + f"border-left: 4px solid {c['warning']};"
-        elif state == "failed":
-            return base_style + f"border-left: 4px solid {c['error']};"
+            return base_style + f"border: 1px solid {c['border']}; opacity: 0.8;"
         else:
-            return base_style
+            return base_style + f"border: 1px solid {c['border']};"
     
     @classmethod
     def get_status_color(cls, state: str) -> str:

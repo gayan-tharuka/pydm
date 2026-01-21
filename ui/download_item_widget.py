@@ -1,18 +1,19 @@
 """
 Download Item Widget - Custom widget for displaying a download in the list
 
-Features a modern card design with progress bar, speed display, and action buttons.
+Features a modern card design with nice vector icons and Apple-style layout.
 """
 
 from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, 
-    QProgressBar, QPushButton, QSizePolicy, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+    QPushButton, QProgressBar
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtGui import QIcon, QPainter, QColor
 
 from ..core.download_engine import DownloadTask, DownloadState
 from .styles import Styles
+from .icon_utils import IconUtils
 
 
 class DownloadItemWidget(QWidget):
@@ -31,142 +32,133 @@ class DownloadItemWidget(QWidget):
         self.task = task
         self._setup_ui()
         self.update_display()
-    
+        
     def _setup_ui(self):
         """Setup the widget UI"""
-        # Main layout
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(16)
+        # Main layout (Horizontal)
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(12, 12, 12, 12)
+        self.layout.setSpacing(16)
         
-        # File icon placeholder (left side)
-        self.icon_label = QLabel()
-        self.icon_label.setFixedSize(48, 48)
-        self.icon_label.setStyleSheet(f"""
-            background-color: {Styles.COLORS['bg_hover']};
-            border-radius: 10px;
-            font-size: 20px;
-        """)
-        self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.icon_label.setText(self._get_file_icon())
-        layout.addWidget(self.icon_label)
+        # 1. File Icon (Left)
+        # We use a button as an icon container for perfect centering
+        self.icon_btn = QPushButton()
+        self.icon_btn.setObjectName("iconButton")
+        self.icon_btn.setFixedSize(48, 48)
+        self.icon_btn.setIconSize(QSize(32, 32)) 
+        # Disable interaction
+        self.icon_btn.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.layout.addWidget(self.icon_btn)
         
-        # Info section (middle)
+        # 2. Info Section (Middle)
         info_layout = QVBoxLayout()
         info_layout.setSpacing(6)
+        info_layout.setContentsMargins(0, 2, 0, 2)
         
-        # Filename
+        # Top Row: Filename and Status
+        top_row = QHBoxLayout()
+        top_row.setSpacing(10)
+        
         self.filename_label = QLabel(self.task.filename)
-        font = self.filename_label.font()
-        font.setPointSize(14)
-        font.setWeight(QFont.Weight.DemiBold)
-        self.filename_label.setFont(font)
-        self.filename_label.setStyleSheet(f"color: {Styles.COLORS['text_primary']};")
-        info_layout.addWidget(self.filename_label)
+        self.filename_label.setObjectName("titleLabel")
+        self.filename_label.setStyleSheet("font-size: 15px; font-weight: 600;")
+        top_row.addWidget(self.filename_label)
         
-        # Progress bar
+        top_row.addStretch()
+        
+        # Status Badge (Capsule style)
+        self.status_label = QLabel(self.task.state.value)
+        self.status_label.setObjectName("mutedLabel")
+        self.status_label.setStyleSheet(f"color: {Styles.COLORS['text_secondary']};")
+        top_row.addWidget(self.status_label)
+        
+        info_layout.addLayout(top_row)
+        
+        # Middle: Progress Bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setFixedHeight(8)
+        self.progress_bar.setValue(int(self.task.progress))
         self.progress_bar.setTextVisible(False)
+        self.progress_bar.setFixedHeight(5)  # Simpler, thinner bar
         info_layout.addWidget(self.progress_bar)
         
-        # Status row
-        status_layout = QHBoxLayout()
-        status_layout.setSpacing(16)
+        # Bottom Row: Stats
+        stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(16)
         
-        # Status label
-        self.status_label = QLabel("Queued")
-        self.status_label.setStyleSheet(f"color: {Styles.COLORS['text_secondary']}; font-size: 12px;")
-        status_layout.addWidget(self.status_label)
+        self.size_label = QLabel(self._format_size(self.task.file_size))
+        self.size_label.setObjectName("mutedLabel")
+        stats_layout.addWidget(self.size_label)
         
-        # Size info
-        self.size_label = QLabel("0 B / 0 B")
-        self.size_label.setStyleSheet(f"color: {Styles.COLORS['text_muted']}; font-size: 12px;")
-        status_layout.addWidget(self.size_label)
-        
-        # Speed
         self.speed_label = QLabel("")
-        self.speed_label.setStyleSheet(f"color: {Styles.COLORS['primary']}; font-size: 12px; font-weight: 600;")
-        status_layout.addWidget(self.speed_label)
+        self.speed_label.setObjectName("mutedLabel")
+        stats_layout.addWidget(self.speed_label)
         
-        # ETA
         self.eta_label = QLabel("")
-        self.eta_label.setStyleSheet(f"color: {Styles.COLORS['text_muted']}; font-size: 12px;")
-        status_layout.addWidget(self.eta_label)
+        self.eta_label.setObjectName("mutedLabel")
+        stats_layout.addWidget(self.eta_label)
         
-        status_layout.addStretch()
-        info_layout.addLayout(status_layout)
+        stats_layout.addStretch()
+        info_layout.addLayout(stats_layout)
         
-        layout.addLayout(info_layout, 1)
+        # Add info layout to main layout
+        self.layout.addLayout(info_layout, stretch=1)
         
-        # Action buttons (right side)
+        # 3. Actions (Right)
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(8)
+        buttons_layout.setContentsMargins(8, 0, 0, 0)
         
-        # Pause/Resume button
+        # Action Buttons using Vector Icons
         self.pause_resume_btn = QPushButton()
         self.pause_resume_btn.setObjectName("iconButton")
-        self.pause_resume_btn.setFixedSize(36, 36)
-        self.pause_resume_btn.setText("Pause")
+        self.pause_resume_btn.setFixedSize(32, 32)
+        self.pause_resume_btn.setIconSize(QSize(18, 18))
         self.pause_resume_btn.setToolTip("Pause")
         self.pause_resume_btn.clicked.connect(self._on_pause_resume)
         buttons_layout.addWidget(self.pause_resume_btn)
         
-        # Cancel/Remove button
         self.cancel_btn = QPushButton()
         self.cancel_btn.setObjectName("iconButton")
-        self.cancel_btn.setFixedSize(36, 36)
-        self.cancel_btn.setText("Cancel")
+        self.cancel_btn.setFixedSize(32, 32)
+        self.cancel_btn.setIconSize(QSize(16, 16))
         self.cancel_btn.setToolTip("Cancel")
         self.cancel_btn.clicked.connect(self._on_cancel)
         buttons_layout.addWidget(self.cancel_btn)
         
-        # Open folder button (shown when completed)
         self.open_folder_btn = QPushButton()
         self.open_folder_btn.setObjectName("iconButton")
-        self.open_folder_btn.setFixedSize(36, 36)
-        self.open_folder_btn.setText("Open Folder")
+        self.open_folder_btn.setFixedSize(32, 32)
+        self.open_folder_btn.setIconSize(QSize(18, 18))
+        self.open_folder_btn.setIcon(IconUtils.icon("folder", Styles.COLORS['primary']))
         self.open_folder_btn.setToolTip("Open Folder")
         self.open_folder_btn.clicked.connect(lambda: self.open_folder_clicked.emit(self.task.id))
         self.open_folder_btn.hide()
-        buttons_layout.addWidget(self.open_folder_btn)
         
-        layout.addLayout(buttons_layout)
-        
-        # Set size policy
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setMinimumHeight(90)
+        self.layout.addLayout(buttons_layout)
     
-    def _get_file_icon(self) -> str:
-        """Get emoji icon based on file type"""
+    def _update_file_icon(self):
+        """Update file icon based on file type"""
         filename = self.task.filename.lower()
         
         if any(filename.endswith(ext) for ext in ['.mp4', '.mkv', '.avi', '.mov', '.wmv']):
-            return "[VIDEO]"
+            self.icon_btn.setIcon(IconUtils.icon("video", "#FF2D55")) # System Pink
         elif any(filename.endswith(ext) for ext in ['.mp3', '.wav', '.flac', '.aac', '.m4a']):
-            return "[AUDIO]"
+            self.icon_btn.setIcon(IconUtils.icon("audio", "#BF5AF2")) # System Purple
         elif any(filename.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']):
-            return "[IMAGE]"
-        elif any(filename.endswith(ext) for ext in ['.pdf']):
-            return "[PDF]"
+            self.icon_btn.setIcon(IconUtils.icon("image", "#FF9F0A")) # System Orange
         elif any(filename.endswith(ext) for ext in ['.zip', '.rar', '.7z', '.tar', '.gz']):
-            return "[ARCHIVE]"
-        elif any(filename.endswith(ext) for ext in ['.exe', '.dmg', '.app', '.pkg']):
-            return "[APP]"
-        elif any(filename.endswith(ext) for ext in ['.doc', '.docx', '.txt', '.rtf']):
-            return "[DOC]"
+            self.icon_btn.setIcon(IconUtils.icon("archive", "#FFCC00")) # System Yellow
         else:
-            return "[FILE]"
-    
+            self.icon_btn.setIcon(IconUtils.icon("file", "#0A84FF")) # System Blue
+            
     def update_display(self):
         """Update the display based on current task state"""
         # Update filename
         self.filename_label.setText(self.task.filename or "Unknown")
         
         # Update icon
-        self.icon_label.setText(self._get_file_icon())
+        self._update_file_icon()
         
         # Update progress
         progress = int(self.task.progress)
@@ -182,11 +174,11 @@ class DownloadItemWidget(QWidget):
         state_labels = {
             DownloadState.QUEUED: "Queued",
             DownloadState.FETCHING_INFO: "Getting info...",
-            DownloadState.DOWNLOADING: f"Downloading ({progress}%)",
+            DownloadState.DOWNLOADING: f"Downloading {progress}%",
             DownloadState.PAUSED: "Paused",
-            DownloadState.MERGING: "Merging chunks...",
+            DownloadState.MERGING: "Merging...",
             DownloadState.COMPLETED: "Completed",
-            DownloadState.FAILED: f"Failed: {self.task.error or 'Unknown error'}",
+            DownloadState.FAILED: "Failed",
             DownloadState.CANCELLED: "Cancelled",
         }
         self.status_label.setText(state_labels.get(state, "Unknown"))
@@ -197,52 +189,63 @@ class DownloadItemWidget(QWidget):
         # Update speed and ETA
         if state == DownloadState.DOWNLOADING:
             self.speed_label.setText(self.task.formatted_speed)
-            self.eta_label.setText(f"ETA: {self.task.formatted_eta}")
+            self.eta_label.setText(self.task.formatted_eta)
             self.speed_label.show()
             self.eta_label.show()
         else:
             self.speed_label.hide()
             self.eta_label.hide()
-        
+            
         # Update buttons based on state
         self._update_buttons()
         
         # Update widget style based on state
         self._update_style()
-    
+        
     def _update_buttons(self):
         """Update button visibility and state"""
         state = self.task.state
         
         if state in (DownloadState.DOWNLOADING, DownloadState.FETCHING_INFO):
-            self.pause_resume_btn.setText("Pause")
+            self.pause_resume_btn.setIcon(IconUtils.icon("pause", Styles.COLORS['text_primary']))
             self.pause_resume_btn.setToolTip("Pause")
             self.pause_resume_btn.show()
+            
+            self.cancel_btn.setIcon(IconUtils.icon("stop", Styles.COLORS['error']))
+            self.cancel_btn.setToolTip("Cancel")
             self.cancel_btn.show()
+            
             self.open_folder_btn.hide()
+            
         elif state == DownloadState.PAUSED:
-            self.pause_resume_btn.setText("Resume")
+            self.pause_resume_btn.setIcon(IconUtils.icon("resume", Styles.COLORS['success']))
             self.pause_resume_btn.setToolTip("Resume")
             self.pause_resume_btn.show()
+            
+            self.cancel_btn.setIcon(IconUtils.icon("stop", Styles.COLORS['error']))
+            self.cancel_btn.setToolTip("Cancel")
             self.cancel_btn.show()
+            
             self.open_folder_btn.hide()
-        elif state == DownloadState.QUEUED:
-            self.pause_resume_btn.hide()
-            self.cancel_btn.show()
-            self.open_folder_btn.hide()
+            
         elif state == DownloadState.COMPLETED:
             self.pause_resume_btn.hide()
-            self.cancel_btn.setText("Remove")
-            self.cancel_btn.setToolTip("Remove")
+            
+            self.cancel_btn.setIcon(IconUtils.icon("remove", Styles.COLORS['text_muted']))
+            self.cancel_btn.setToolTip("Remove from list")
             self.cancel_btn.show()
+            
             self.open_folder_btn.show()
+            
         else:  # FAILED, CANCELLED
             self.pause_resume_btn.hide()
-            self.cancel_btn.setText("Remove")
-            self.cancel_btn.setToolTip("Remove")
+            
+            self.cancel_btn.setIcon(IconUtils.icon("remove", Styles.COLORS['text_muted']))
+            self.cancel_btn.setToolTip("Remove from list")
             self.cancel_btn.show()
+            
             self.open_folder_btn.hide()
-    
+            
     def _update_style(self):
         """Update widget style based on state"""
         state_map = {
@@ -254,7 +257,20 @@ class DownloadItemWidget(QWidget):
         }
         style_state = state_map.get(self.task.state, "normal")
         self.setStyleSheet(Styles.get_download_item_style(style_state))
-    
+        
+    def _format_size(self, size_bytes):
+        """Format size in bytes to human readable string"""
+        if size_bytes == 0:
+            return "0 B"
+        
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        i = 0
+        while size_bytes >= 1024 and i < len(units) - 1:
+            size_bytes /= 1024
+            i += 1
+            
+        return f"{size_bytes:.1f} {units[i]}"
+
     def _on_pause_resume(self):
         """Handle pause/resume button click"""
         if self.task.state == DownloadState.PAUSED:

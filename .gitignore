@@ -1,0 +1,39 @@
+# PyDM - Python Download Manager
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Local config and data
+.pydm/
+*.db
+
+# Temp files
+*.tmp
+*.temp
+.DS_Store
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

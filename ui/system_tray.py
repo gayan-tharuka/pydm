@@ -142,10 +142,18 @@ class SystemTrayIcon(QSystemTrayIcon):
     
     def show_notification(self, title: str, message: str, icon_type=None):
         """Show a system notification"""
+        # On macOS, using MessageIcon.Information/Warning etc can cause SIGBUS in ImageIO
+        # when Qt tries to create a notification image. Safer to use NoIcon.
         if icon_type is None:
-            icon_type = QSystemTrayIcon.MessageIcon.Information
+            icon_type = QSystemTrayIcon.MessageIcon.NoIcon
         
-        self.showMessage(title, message, icon_type, 3000)
+        if self.isVisible():
+            self.showMessage(title, message, icon_type, 3000)
+
+    def cleanup(self):
+        """Cleanup system tray resources"""
+        self.hide()
+        self.setParent(None)
     
     def show_download_complete(self, filename: str):
         """Show download complete notification"""

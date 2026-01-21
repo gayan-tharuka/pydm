@@ -10,13 +10,13 @@ from PyQt6.QtWidgets import (
     QSpinBox, QGroupBox, QFormLayout, QFrame
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon
 
 import os
 from pathlib import Path
 
 from .styles import Styles
-
+from .icon_utils import IconUtils
 
 class AddDownloadDialog(QDialog):
     """Dialog for adding a new download"""
@@ -53,10 +53,6 @@ class AddDownloadDialog(QDialog):
         # Title
         title = QLabel("Add New Download")
         title.setObjectName("titleLabel")
-        font = title.font()
-        font.setPointSize(20)
-        font.setWeight(QFont.Weight.Bold)
-        title.setFont(font)
         layout.addWidget(title)
         
         # URL Section
@@ -134,15 +130,17 @@ class AddDownloadDialog(QDialog):
         # Buttons
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
+        btn_layout.addStretch()
         
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setObjectName("secondaryButton")
-        cancel_btn.setMinimumHeight(44)
+        cancel_btn.setMinimumHeight(36)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
         self.download_btn = QPushButton("Download")
-        self.download_btn.setMinimumHeight(44)
+        self.download_btn.setObjectName("primaryButton")
+        self.download_btn.setMinimumHeight(36)
         self.download_btn.setEnabled(False)
         self.download_btn.clicked.connect(self._on_download)
         btn_layout.addWidget(self.download_btn)
@@ -165,7 +163,7 @@ class AddDownloadDialog(QDialog):
         # Basic URL validation
         if url.startswith(("http://", "https://")):
             self.url_status.setText("Valid URL")
-            self.url_status.setStyleSheet(f"color: {Styles.COLORS['success']}; font-size: 12px;")
+            self.url_status.setStyleSheet(f"color: {Styles.COLORS['success']}; font-size: 12px; font-weight: 600;")
             self.download_btn.setEnabled(True)
             
             # Try to extract filename from URL
@@ -179,7 +177,7 @@ class AddDownloadDialog(QDialog):
                 pass
         else:
             self.url_status.setText("Invalid URL (must start with http:// or https://)")
-            self.url_status.setStyleSheet(f"color: {Styles.COLORS['error']}; font-size: 12px;")
+            self.url_status.setStyleSheet(f"color: {Styles.COLORS['error']}; font-size: 12px; font-weight: 600;")
             self.download_btn.setEnabled(False)
     
     def _browse_directory(self):
@@ -199,8 +197,10 @@ class AddDownloadDialog(QDialog):
         save_dir = self.dir_input.text().strip()
         filename = self.filename_input.text().strip()
         start_immediately = self.start_immediately_check.isChecked()
+        chunks = self.chunks_spin.value()
         
-        self.download_requested.emit(url, save_dir, filename, start_immediately)
+        # Don't emit immediately, let the caller handle it via get_values
+        # But for convenience we can just accept
         self.accept()
     
     def get_values(self) -> tuple:

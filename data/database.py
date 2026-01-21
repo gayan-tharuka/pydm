@@ -194,6 +194,22 @@ class Database:
             
             # Insert new chunk states
             for chunk in chunks:
+                # Support both dict and object formats
+                if isinstance(chunk, dict):
+                    chunk_id = chunk['chunk_id']
+                    start_byte = chunk['start_byte']
+                    end_byte = chunk['end_byte']
+                    downloaded_bytes = chunk['downloaded_bytes']
+                    state = chunk['state']  # Already a string
+                    temp_file = chunk['temp_file']
+                else:
+                    chunk_id = chunk.chunk_id
+                    start_byte = chunk.start_byte
+                    end_byte = chunk.end_byte
+                    downloaded_bytes = chunk.downloaded_bytes
+                    state = chunk.state.value if hasattr(chunk.state, 'value') else chunk.state
+                    temp_file = chunk.temp_file
+                
                 cursor.execute("""
                     INSERT INTO chunks (
                         download_id, chunk_id, start_byte, end_byte,
@@ -201,12 +217,12 @@ class Database:
                     ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
                     download_id,
-                    chunk.chunk_id,
-                    chunk.start_byte,
-                    chunk.end_byte,
-                    chunk.downloaded_bytes,
-                    chunk.state.value,
-                    chunk.temp_file
+                    chunk_id,
+                    start_byte,
+                    end_byte,
+                    downloaded_bytes,
+                    state,
+                    temp_file
                 ))
             
             conn.commit()

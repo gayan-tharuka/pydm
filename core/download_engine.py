@@ -107,14 +107,15 @@ class DownloadTask:
     _speed_samples: list = field(default_factory=list, repr=False)
     _last_speed_update: float = field(default=0, repr=False)
     _last_downloaded: int = field(default=0, repr=False)
-    
+    saved_chunk_states: Optional[list] = field(default=None, repr=False)  # For restoring from DB
+
     @property
     def progress(self) -> float:
         """Download progress percentage"""
         if self.file_size == 0:
             return 0.0
         return (self.downloaded_bytes / self.file_size) * 100
-    
+
     @property
     def formatted_speed(self) -> str:
         """Human-readable download speed"""
@@ -187,6 +188,9 @@ class DownloadTask:
             
             self._last_speed_update = now
             self._last_downloaded = self.downloaded_bytes
+
+
+
 
 
 class DownloadEngine:
@@ -263,14 +267,25 @@ class DownloadEngine:
             # Determine number of chunks
             num_chunks = task.num_chunks if task.resumable else 1
             
-            # Create chunk manager
-            task._chunk_manager = ChunkManager(
-                url=task.url,
-                file_size=task.file_size,
-                temp_dir=download_temp_dir,
-                num_chunks=num_chunks,
-                progress_callback=lambda cid, dl, total: self._on_chunk_progress(task, cid, dl, total)
-            )
+            # Create chunk manager only if it doesn't exist
+            if task._chunk_manager is None:
+                task._chunk_manager = ChunkManager(
+                    url=task.url,
+                    file_size=task.file_size,
+                    temp_dir=download_temp_dir,
+                    num_chunks=num_chunks,
+                    progress_callback=lambda cid, dl, total: self._on_chunk_progress(task, cid, dl, total)
+                )
+                
+                # Restore chunk states if available (e.g. from DB)
+                if task.saved_chunk_states:
+                    try:
+                        task._chunk_manager.restore_state({"chunks": task.saved_chunk_states})
+                    except Exception as e:
+                        print(f"Failed to restore chunk states for {task.id}: {e}")
+            else:
+                # Ensure callback is re-attached if needed (e.g. after serialization restore)
+                task._chunk_manager.progress_callback = lambda cid, dl, total: self._on_chunk_progress(task, cid, dl, total)
             
             # Start download
             task.state = DownloadState.DOWNLOADING
