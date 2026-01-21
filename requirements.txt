@@ -1,0 +1,21 @@
+# PyDM - Python Download Manager
+# Core Dependencies
+
+# GUI Framework - Modern Qt bindings for Python
+PyQt6>=6.6.0
+
+# High-performance async HTTP client for chunked downloads
+aiohttp>=3.9.0
+
+# Async file operations for non-blocking I/O
+aiofiles>=23.2.0
+
+# HTTP library for URL validation and metadata
+requests>=2.31.0
+
+# Database ORM (optional, using SQLite directly for simplicity)
+# SQLite is built into Python
+
+# Development dependencies
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
